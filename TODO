@@ -1,0 +1,2 @@
+* provide a mechanism similar to btrfs subvolume find-new
+* use BTRFS_IOC_TREE_SEARCH_V2 (introduced in 3.16)
