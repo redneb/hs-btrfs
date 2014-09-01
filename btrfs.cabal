@@ -1,5 +1,5 @@
 name:                btrfs
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Bindings to the btrfs API
 description:
   This package provides low-level bindings to the btrfs API (i.e. the
@@ -19,7 +19,7 @@ license-file:        LICENSE
 author:              Marios Titas <rednebΑΤgmxDΟΤcom>
 maintainer:          Marios Titas <rednebΑΤgmxDΟΤcom>
 category:            System, Filesystem
-build-type:          Custom
+build-type:          Simple
 cabal-version:       >=1.10
 
 extra-source-files:
@@ -31,6 +31,7 @@ extra-source-files:
   include/btrfs/list.h
   include/btrfs/radix-tree.h
   include/btrfs/rbtree.h
+  make-bytestring.hs
 
 source-repository head
   type: git
@@ -41,7 +42,8 @@ flag examples
   default:             False
 
 library
-  exposed-modules:     System.Linux.Btrfs, System.Linux.Btrfs.UUID
+  exposed-modules:     System.Linux.Btrfs, System.Linux.Btrfs.ByteString,
+                       System.Linux.Btrfs.UUID
   other-modules:       Data.Word.Endian, System.Linux.Btrfs.Time,
                        System.Linux.Btrfs.FilePathLike
   build-depends:       base >=4.6 && <5, unix >=2.6,
