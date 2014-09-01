@@ -41,8 +41,7 @@ flag examples
   default:             False
 
 library
-  exposed-modules:     System.Linux.Btrfs, System.Linux.Btrfs.ByteString,
-                       System.Linux.Btrfs.UUID
+  exposed-modules:     System.Linux.Btrfs, System.Linux.Btrfs.UUID
   other-modules:       Data.Word.Endian, System.Linux.Btrfs.Time,
                        System.Linux.Btrfs.FilePathLike
   build-depends:       base >=4.6 && <5, unix >=2.6,
