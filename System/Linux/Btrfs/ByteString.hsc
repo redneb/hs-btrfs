@@ -772,7 +772,7 @@ resolveInodeFd subvolFd inum =
     fspathSize = 2 * 1024 + (#size struct btrfs_data_container)
 
 -- | Find the file path(s) given an inode number. Returns a list of file paths
--- and an integer indicating the number of path found but not included in
+-- and an integer indicating the number of paths found but not included in
 -- the resulting list. This is because of a limitation in the kernel (it
 -- will not return an arbitrarily large list). The paths returned are
 -- relative to the root of the subvolume.
