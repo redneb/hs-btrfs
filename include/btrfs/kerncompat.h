@@ -28,6 +28,10 @@
 #include <assert.h>
 #include <stddef.h>
 #include <linux/types.h>
+#include <stdint.h>
+
+#define ptr_to_u64(x)	((u64)(uintptr_t)x)
+#define u64_to_ptr(x)	((void *)(uintptr_t)x)
 
 #ifndef READ
 #define READ 0
@@ -235,7 +239,7 @@ static inline long IS_ERR(const void *ptr)
 
 #define BUG_ON(c) assert(!(c))
 #define WARN_ON(c) assert(!(c))
-
+#define	ASSERT(c) assert(c)
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
