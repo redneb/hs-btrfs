@@ -925,7 +925,7 @@ treeSearchFd fd sk maxItemCount0 callback =
         else do
             let shPtr' = itemPtr `plusPtr` fromIntegral (shLen sh)
             loopItems shPtr' (itemsFound - 1)
-    -- items are index by keys which are (objectId, iType, offset)
+    -- items are indexed by keys which are (objectId, iType, offset)
     -- they are returned in lexicographical order wrt the keys
     nextKey (objectId, iType, offset)
         | offset   < maxBound         = Just (objectId, iType, offset + 1)
