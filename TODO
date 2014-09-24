@@ -1,2 +1,3 @@
-* provide a mechanism similar to btrfs subvolume find-new
+* introduce a new type (called Key or BtrfsKey?) combining (objectId, iType, offset) and define Bounded and Enum instances for it
+* provide a high level function that implements functionality similar to btrfs subvolume find-new
 * use BTRFS_IOC_TREE_SEARCH_V2 (introduced in 3.16)
