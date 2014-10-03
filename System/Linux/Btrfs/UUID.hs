@@ -13,7 +13,6 @@ import Foreign.Storable (Storable(..))
 import Foreign.Ptr (castPtr)
 import Foreign.C.Types (CInt)
 
--- | A @UUID@ is stored as two big-endian 'Word64's.
 data UUID = UUID Word64 Word64
   deriving (Eq, Ord)
 
@@ -22,6 +21,7 @@ instance Show UUID where
         showParen (p > 9) $
             showString "fromString " . shows (toString u)
 
+-- | A @UUID@ is stored as two big-endian 'Word64's.
 instance Storable UUID where
     sizeOf _ = 16
     alignment _ = alignment (undefined :: CInt)
