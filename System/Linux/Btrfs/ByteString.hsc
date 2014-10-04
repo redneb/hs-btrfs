@@ -325,7 +325,7 @@ snapshotFd srcFd dstPath readOnly =
 snapshot
     :: FILEPATH -- ^ The source subvolume.
     -> FILEPATH -- ^ The destination subvolume (must not exist).
-    -> Bool     -- ^ Make the subvolume read-only?
+    -> Bool     -- ^ Create a read-only snapshot?
     -> IO ()
 snapshot srcPath dstPath readOnly =
     withFd srcPath ReadOnly $ \srcFd ->
