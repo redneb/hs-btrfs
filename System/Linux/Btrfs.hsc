@@ -752,6 +752,7 @@ data DefragRangeArgs = DefragRangeArgs
     , draFlush :: Bool
         -- ^ Flush data to disk immediately after defragmenting.
     }
+  deriving (Show, Eq)
 
 -- | Defaults for 'defragRange'. Selects the entire file, no compression,
 -- and no flushing.
