@@ -23,6 +23,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 extra-source-files:
+  ChangeLog
   include/missing.h
   include/btrfs/ctree.h
   include/btrfs/extent-cache.h
