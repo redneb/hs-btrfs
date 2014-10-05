@@ -46,6 +46,7 @@ module System.Linux.Btrfs
     , getSubvolInfoFd, getSubvolInfo
     , getSubvolByUuidFd, getSubvolByUuid
     , getSubvolByReceivedUuidFd, getSubvolByReceivedUuid
+    , getDefaultSubvolFd, getDefaultSubvol
     -- * Defragging
     , defragFd, defrag
     , DefragRangeArgs(..), defaultDefragRangeArgs
@@ -673,6 +674,36 @@ getSubvolByReceivedUuid
 getSubvolByReceivedUuid path uuid =
     withFd path ReadOnly $ \fd ->
         getSubvolByReceivedUuidFd fd uuid
+
+getDefaultSubvolFd :: Fd -> IO SubvolId
+getDefaultSubvolFd fd = do
+    let sk = defaultSearchKey
+            { skTreeId      = (#const BTRFS_ROOT_TREE_OBJECTID)
+            , skMinObjectId = (#const BTRFS_ROOT_TREE_DIR_OBJECTID)
+            , skMaxObjectId = (#const BTRFS_ROOT_TREE_DIR_OBJECTID)
+            , skMinType     = (#const BTRFS_DIR_ITEM_KEY)
+            , skMaxType     = (#const BTRFS_DIR_ITEM_KEY)
+            }
+    l <- treeSearchListFd fd sk $ \_ ptr -> do
+        LE16 nameLen <- (#peek struct btrfs_dir_item, name_len) ptr
+        let cName = ptr `plusPtr` (#size struct btrfs_dir_item)
+        name <- peekCStringLen (cName, fromIntegral nameLen)
+        if name /= "default" then
+            return Nothing
+        else do
+            let location = ptr `plusPtr` (#offset struct btrfs_dir_item, location)
+            LE64 objectId <- (#peek struct btrfs_disk_key, objectid) location
+            return (Just objectId)
+    case l of
+        [] -> ioError $ mkIOError doesNotExistErrorType "getDefaultSubvolFd" Nothing Nothing
+        (objectId : _) -> return objectId
+
+-- | Find the id of the default subvolume. This is a wrapper around
+-- 'treeSearch'.
+getDefaultSubvol
+    :: FILEPATH -- ^ The mount point of the volume (or any file in that volume).
+    -> IO SubvolId
+getDefaultSubvol path = withFd path ReadOnly getDefaultSubvolFd
 
 --------------------------------------------------------------------------------
 
