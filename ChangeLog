@@ -1,6 +1,6 @@
 v0.1.1.1
 
-	* Support getting the id of the default subvolume.
+	* Support getting/setting the id of the default subvolume.
 
 v0.1.1.0
 

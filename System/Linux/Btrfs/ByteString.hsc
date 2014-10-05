@@ -47,6 +47,7 @@ module System.Linux.Btrfs
     , getSubvolByUuidFd, getSubvolByUuid
     , getSubvolByReceivedUuidFd, getSubvolByReceivedUuid
     , getDefaultSubvolFd, getDefaultSubvol
+    , setDefaultSubvolFd, setDefaultSubvol
     -- * Defragging
     , defragFd, defrag
     , DefragRangeArgs(..), defaultDefragRangeArgs
@@ -704,6 +705,23 @@ getDefaultSubvol
     :: FILEPATH -- ^ The mount point of the volume (or any file in that volume).
     -> IO SubvolId
 getDefaultSubvol path = withFd path ReadOnly getDefaultSubvolFd
+
+setDefaultSubvolFd :: Fd -> ObjectId -> IO ()
+setDefaultSubvolFd fd objectId = do
+    alloca $ \ptr -> do
+        poke ptr objectId
+        throwErrnoIfMinus1_ "setDefaultSubvolFd" $
+            ioctl fd (#const BTRFS_IOC_DEFAULT_SUBVOL) ptr
+
+-- | Set the default subvolume.
+--
+-- Note: calls the @BTRFS_IOC_DEFAULT_SUBVOL@ @ioctl@.
+setDefaultSubvol
+    :: FILEPATH -- ^ The mount point of the volume (or any file in that volume).
+    -> SubvolId -- ^ The id of the new default subvolume.
+    -> IO ()
+setDefaultSubvol path subvolId =
+    withFd path ReadOnly $ \fd -> setDefaultSubvolFd fd subvolId
 
 --------------------------------------------------------------------------------
 
