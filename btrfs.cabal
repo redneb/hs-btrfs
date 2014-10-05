@@ -7,7 +7,7 @@ description:
   supported, including functions needed to work with subvolumes/snapshots
   as well as file cloning.
   .
-  In order to build this package, you need @linux-headers 3.9@ or newer.
+  In order to build this package, @linux-headers@ need to be installed.
   .
   Warning: btrfs is still considered experimental. This module is also
   experimental and may contain serious bugs that may result in data loss.
@@ -23,6 +23,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 extra-source-files:
+  include/missing.h
   include/btrfs/ctree.h
   include/btrfs/extent-cache.h
   include/btrfs/extent_io.h

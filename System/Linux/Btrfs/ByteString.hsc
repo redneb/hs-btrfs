@@ -90,9 +90,9 @@ import Data.Word.Endian
 import System.Linux.Btrfs.Time
 import System.Linux.Btrfs.UUID
 
-#include <linux/btrfs.h>
-#define __IOCTL_
+#include <btrfs/ioctl.h>
 #include <btrfs/ctree.h>
+#include <missing.h>
 
 #include <linux/fs.h>
 
