@@ -614,7 +614,7 @@ getSubvolInfoFd fd subvolId
             , siRTime = nothingIf (nv2 || rTransId == 0) rTime
             }
 
--- | Retrieve information about a subvolume.
+-- | Retrieve information about a subvolume. This is a wrapper around 'treeSearch'.
 getSubvolInfo
     :: FILEPATH -- ^ The mount point of the volume (or any file in that volume).
     -> SubvolId -- ^ The id of the subvolume.
@@ -646,7 +646,8 @@ getSubvolByUuidFd :: Fd -> UUID -> IO SubvolId
 getSubvolByUuidFd =
     searchByUuidFd (#const BTRFS_UUID_KEY_SUBVOL)
 
--- | Find the id of a subvolume, given its UUID.
+-- | Find the id of a subvolume, given its UUID. This is a wrapper around
+-- 'treeSearch'.
 --
 -- /Requires Linux 3.12 or later./
 getSubvolByUuid
@@ -661,7 +662,8 @@ getSubvolByReceivedUuidFd :: Fd -> UUID -> IO SubvolId
 getSubvolByReceivedUuidFd =
     searchByUuidFd (#const BTRFS_UUID_KEY_RECEIVED_SUBVOL)
 
--- | Find the id of a subvolume, given its 'siReceivedUuid'.
+-- | Find the id of a subvolume, given its 'siReceivedUuid'. This is a
+-- wrapper around 'treeSearch'.
 --
 -- /Requires Linux 3.12 or later./
 getSubvolByReceivedUuid
