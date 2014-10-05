@@ -744,9 +744,8 @@ data DefragRangeArgs = DefragRangeArgs
     , draLength :: FileSize
         -- ^ Number of bytes to defrag, use 'maxBound' to say all.
     , draExtentThreshold :: Word32
-        -- ^ Any extent bigger than this size will be considered already
-        -- defragged. Use 0 to take the kernel default, use 1 to say every
-        -- single extent must be rewritten.
+        -- ^ Any extent of size bigger or equal to this number will be
+        -- considered already defragged. Use 0 for the kernel default.
     , draCompress :: Maybe CompressionType
         -- ^ Compress the file while defragmenting.
     , draFlush :: Bool
