@@ -11,6 +11,7 @@ can be distinguished by the @Fd@ suffix in their names.
 -}
 
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE RecordWildCards #-}
 
 #if BTRFS_RAW_PATHS
 ##define FILEPATH RawFilePath
@@ -21,7 +22,7 @@ module System.Linux.Btrfs
 #endif
     (
     -- * Basic types
-      FileSize, ObjectType, ObjectId, InodeNum, SubvolId
+      FileSize, ObjectType, ObjectId, InodeNum, SubvolId, CompressionType(..)
     -- * File cloning
     , cloneFd, clone, cloneNew
     , cloneRangeFd, cloneRange
@@ -47,6 +48,8 @@ module System.Linux.Btrfs
     , getSubvolByReceivedUuidFd, getSubvolByReceivedUuid
     -- * Defragging
     , defragFd, defrag
+    , DefragRangeArgs(..), defaultDefragRangeArgs
+    , defragRangeFd, defragRange
     -- * Sync
     , syncFd, sync
     , startSyncFd, startSync
@@ -110,6 +113,9 @@ type ObjectId = Word64
 type InodeNum = ObjectId
 
 type SubvolId = ObjectId
+
+data CompressionType = Zlib | LZO
+    deriving (Show, Read, Eq, Enum, Bounded)
 
 --------------------------------------------------------------------------------
 
@@ -679,6 +685,62 @@ defragFd fd =
 -- Note: calls the @BTRFS_IOC_DEFRAG@ @ioctl@.
 defrag :: FILEPATH -> IO ()
 defrag path = withFd path ReadWrite defragFd
+
+-- | Argument to the 'defragRange' operation.
+data DefragRangeArgs = DefragRangeArgs
+    { draStart :: FileSize
+        -- ^ Beginning of the defrag range.
+    , draLength :: FileSize
+        -- ^ Number of bytes to defrag, use 'maxBound' to say all.
+    , draExtentThreshold :: Word32
+        -- ^ Any extent bigger than this size will be considered already
+        -- defragged. Use 0 to take the kernel default, use 1 to say every
+        -- single extent must be rewritten.
+    , draCompress :: Maybe CompressionType
+        -- ^ Compress the file while defragmenting.
+    , draFlush :: Bool
+        -- ^ Flush data to disk immediately after defragmenting.
+    }
+
+-- | Defaults for 'defragRange'. Selects the entire file, no compression,
+-- and no flushing.
+defaultDefragRangeArgs :: DefragRangeArgs
+defaultDefragRangeArgs = DefragRangeArgs
+    { draStart = 0
+    , draLength = maxBound
+    , draExtentThreshold = 0
+    , draCompress = Nothing
+    , draFlush = False
+    }
+
+defragRangeFd :: Fd -> DefragRangeArgs -> IO ()
+defragRangeFd fd DefragRangeArgs{..} =
+    allocaBytesZero (#size struct btrfs_ioctl_defrag_range_args) $ \args -> do
+        (#poke struct btrfs_ioctl_defrag_range_args, start        ) args draStart
+        (#poke struct btrfs_ioctl_defrag_range_args, len          ) args draLength
+        (#poke struct btrfs_ioctl_defrag_range_args, flags        ) args flags
+        (#poke struct btrfs_ioctl_defrag_range_args, extent_thresh) args draExtentThreshold
+        (#poke struct btrfs_ioctl_defrag_range_args, compress_type) args comp_type
+        throwErrnoIfMinus1_ "defragRangeFd" $
+            withBlockSIGVTALRM $ -- this is probably a bad idea
+                ioctl fd (#const BTRFS_IOC_DEFRAG_RANGE) args
+  where
+    flags = comp_flags .|. if draFlush then (#const BTRFS_DEFRAG_RANGE_START_IO) else 0
+    comp_flags :: Word64
+    comp_type :: Word32
+    (comp_flags, comp_type) =
+        case draCompress of
+            Nothing -> (0, 0)
+            Just Zlib -> ((#const BTRFS_DEFRAG_RANGE_COMPRESS), (#const BTRFS_COMPRESS_ZLIB))
+            Just LZO  -> ((#const BTRFS_DEFRAG_RANGE_COMPRESS), (#const BTRFS_COMPRESS_LZO))
+
+-- | Defrag a range within a single file.
+--
+-- Note: calls the @BTRFS_IOC_DEFRAG_RANGE@ @ioctl@.
+defragRange :: FILEPATH -> DefragRangeArgs -> IO ()
+defragRange path args =
+    withFd path ReadWrite $ \fd ->
+        defragRangeFd fd args
 
 --------------------------------------------------------------------------------
 
