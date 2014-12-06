@@ -4,10 +4,10 @@ synopsis:            Bindings to the btrfs API
 description:
   This package provides low-level bindings to the btrfs API (i.e. the
   @BTRFS_IOC_@* @ioctl@s). Currently, only a subset of the API is
-  supported, including functions needed to work with subvolumes/snapshots
+  supported, including all functions needed to work with subvolumes/snapshots
   as well as file cloning.
   .
-  In order to build this package, @linux-headers@ need to be installed.
+  In order to build this package, @linux-headers@ needs to be installed.
   .
   Warning: btrfs is still considered experimental. This module is also
   experimental and may contain serious bugs that may result in data loss.
