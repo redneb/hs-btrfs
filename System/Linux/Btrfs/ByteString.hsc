@@ -84,13 +84,14 @@ import Control.Monad
 import Data.IORef
 import Data.Time.Clock (UTCTime)
 import Data.Monoid
-import System.Linux.Btrfs.FilePathLike
+import Prelude
 
 import Foreign
 import Foreign.C.Types
 import Foreign.C.String (CStringLen)
 import Foreign.C.Error
 
+import System.Linux.Btrfs.FilePathLike
 import Data.Word.Endian
 import System.Linux.Btrfs.Time
 import System.Linux.Btrfs.UUID
