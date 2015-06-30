@@ -3,7 +3,11 @@
 module Data.Word.Endian where
 
 import Data.Word (Word16, Word32, Word64)
+#if MIN_VERSION_base(4,7,0)
+import Data.Word (byteSwap16, byteSwap32, byteSwap64)
+#else
 import Data.Bits (rotateL, unsafeShiftL, unsafeShiftR, (.&.), (.|.))
+#endif
 import Foreign.Ptr (castPtr)
 import Foreign.Storable (Storable(..))
 
@@ -41,16 +45,25 @@ MAKE_ENDIAN_WORD(Word64, BE64, fromBE64, toBE64, invert64)
 #endif
 
 invert16 :: Word16 -> Word16
+invert32 :: Word32 -> Word32
+invert64 :: Word64 -> Word64
+
+#if MIN_VERSION_base(4,7,0)
+invert16 = byteSwap16
+{-# INLINE invert16 #-}
+invert32 = byteSwap32
+{-# INLINE invert32 #-}
+invert64 = byteSwap64
+{-# INLINE invert64 #-}
+#else
 invert16 x = x `rotateL` 8
 
-invert32 :: Word32 -> Word32
 invert32 x =
     ((x               ) `unsafeShiftR` 24) .|.
     ((x .&. 0x00ff0000) `unsafeShiftR`  8) .|.
     ((x .&. 0x0000ff00) `unsafeShiftL`  8) .|.
     ((x               ) `unsafeShiftL` 24)
 
-invert64 :: Word64 -> Word64
 invert64 x =
     ((x                       ) `unsafeShiftR` 56) .|.
     ((x .&. 0x00ff000000000000) `unsafeShiftR` 40) .|.
@@ -60,3 +73,4 @@ invert64 x =
     ((x .&. 0x0000000000ff0000) `unsafeShiftL` 24) .|.
     ((x .&. 0x000000000000ff00) `unsafeShiftL` 40) .|.
     ((x                       ) `unsafeShiftL` 56)
+#endif
