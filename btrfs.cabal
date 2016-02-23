@@ -44,8 +44,8 @@ flag examples
 
 library
   exposed-modules:     System.Linux.Btrfs, System.Linux.Btrfs.ByteString,
-                       System.Linux.Btrfs.UUID
-  other-modules:       Data.Word.Endian, System.Linux.Btrfs.Time,
+                       System.Linux.Btrfs.UUID, System.Linux.Btrfs.Time
+  other-modules:       Data.Word.Endian,
                        System.Linux.Btrfs.FilePathLike
   build-depends:       base >=4.6 && <5, unix >=2.6,
                        time >=1.4, bytestring >=0.9
