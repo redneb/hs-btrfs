@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __EXTENTMAP__
-#define __EXTENTMAP__
+#ifndef __BTRFS_EXTENT_IO_H__
+#define __BTRFS_EXTENT_IO_H__
 
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
@@ -40,6 +40,7 @@
 #define EXTENT_BUFFER_FILLED (1 << 8)
 #define EXTENT_CSUM (1 << 9)
 #define EXTENT_BAD_TRANSID (1 << 10)
+#define EXTENT_BUFFER_DUMMY (1 << 11)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
 
 #define BLOCK_GROUP_DATA     EXTENT_WRITEBACK
@@ -99,10 +100,28 @@ int set_extent_dirty(struct extent_io_tree *tree, u64 start,
 		     u64 end, gfp_t mask);
 int clear_extent_dirty(struct extent_io_tree *tree, u64 start,
 		       u64 end, gfp_t mask);
-int extent_buffer_uptodate(struct extent_buffer *eb);
-int set_extent_buffer_uptodate(struct extent_buffer *eb);
-int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
-				struct extent_buffer *eb);
+static inline int set_extent_buffer_uptodate(struct extent_buffer *eb)
+{
+	eb->flags |= EXTENT_UPTODATE;
+	return 0;
+}
+
+static inline int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
+				struct extent_buffer *eb)
+{
+	eb->flags &= ~EXTENT_UPTODATE;
+	return 0;
+}
+
+static inline int extent_buffer_uptodate(struct extent_buffer *eb)
+{
+	if (!eb || IS_ERR(eb))
+		return 0;
+	if (eb->flags & EXTENT_UPTODATE)
+		return 1;
+	return 0;
+}
+
 int set_state_private(struct extent_io_tree *tree, u64 start, u64 xprivate);
 int get_state_private(struct extent_io_tree *tree, u64 start, u64 *xprivate);
 struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
@@ -111,6 +130,7 @@ struct extent_buffer *find_first_extent_buffer(struct extent_io_tree *tree,
 					       u64 start);
 struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 					  u64 bytenr, u32 blocksize);
+struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src);
 void free_extent_buffer(struct extent_buffer *eb);
 int read_extent_from_disk(struct extent_buffer *eb,
 			  unsigned long offset, unsigned long len);
@@ -128,6 +148,8 @@ void memmove_extent_buffer(struct extent_buffer *dst, unsigned long dst_offset,
 			   unsigned long src_offset, unsigned long len);
 void memset_extent_buffer(struct extent_buffer *eb, char c,
 			  unsigned long start, unsigned long len);
+int extent_buffer_test_bit(struct extent_buffer *eb, unsigned long start,
+			   unsigned long nr);
 int set_extent_buffer_dirty(struct extent_buffer *eb);
 int clear_extent_buffer_dirty(struct extent_buffer *eb);
 int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
