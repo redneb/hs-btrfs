@@ -1,6 +1,7 @@
 vX.Y.Z.W
 
 	* Expose System.Linux.Btrfs.Time.
+	* Add example program that prints the file creation timestamp.
 
 v0.1.1.1
 

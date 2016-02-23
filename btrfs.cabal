@@ -84,3 +84,14 @@ executable btrfs-list-subvols
     build-depends:       base >=4.6 && <5, btrfs
     default-language:    Haskell2010
     ghc-options:         -Wall
+
+executable btrfs-print-creation-time
+  hs-source-dirs:      examples
+  include-dirs:        include
+  main-is:             btrfs-print-creation-time.hs
+  if !flag(examples)
+    buildable:           False
+  else
+    build-depends:       base >=4.6 && <5, btrfs, unix >=2.6, time >=1.4
+    default-language:    Haskell2010
+    ghc-options:         -Wall
