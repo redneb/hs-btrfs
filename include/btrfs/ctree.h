@@ -173,7 +173,7 @@ static int btrfs_csum_sizes[] = { 4 };
 
 /*
  * the key defines the order in the tree, and so it also defines (optimal)
- * block layout.  objectid corresonds to the inode number.  The flags
+ * block layout.  objectid corresponds to the inode number.  The flags
  * tells us things about the object, and is a kind of stream selector.
  * so for a given inode, keys with flags of 1 might refer to the inode
  * data, flags of 2 may point to file data in the btree and flags == 3
@@ -229,7 +229,7 @@ struct btrfs_dev_item {
 
 	/*
 	 * starting byte of this partition on the device,
-	 * to allowr for stripe alignment in the future
+	 * to allow for stripe alignment in the future
 	 */
 	__le64 start_offset;
 
@@ -345,7 +345,7 @@ struct btrfs_header {
 			        sizeof(struct btrfs_header)) / \
 			        sizeof(struct btrfs_key_ptr))
 #define __BTRFS_LEAF_DATA_SIZE(bs) ((bs) - sizeof(struct btrfs_header))
-#define BTRFS_LEAF_DATA_SIZE(r) (__BTRFS_LEAF_DATA_SIZE(r->leafsize))
+#define BTRFS_LEAF_DATA_SIZE(r) (__BTRFS_LEAF_DATA_SIZE(r->nodesize))
 #define BTRFS_MAX_INLINE_DATA_SIZE(r) (BTRFS_LEAF_DATA_SIZE(r) - \
 					sizeof(struct btrfs_item) - \
 					sizeof(struct btrfs_file_extent_item))
@@ -428,6 +428,7 @@ struct btrfs_super_block {
 	__le64 num_devices;
 	__le32 sectorsize;
 	__le32 nodesize;
+	/* Unused and must be equal to nodesize */
 	__le32 leafsize;
 	__le32 stripesize;
 	__le32 sys_chunk_array_size;
@@ -483,7 +484,8 @@ struct btrfs_super_block {
 
 #define BTRFS_FEATURE_COMPAT_SUPP		0ULL
 
-#define BTRFS_FEATURE_COMPAT_RO_SUPP		0ULL
+#define BTRFS_FEATURE_COMPAT_RO_SUPP			\
+	(BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE)
 
 #define BTRFS_FEATURE_INCOMPAT_SUPP			\
 	(BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF |		\
@@ -576,6 +578,7 @@ struct btrfs_extent_item_v0 {
 
 #define BTRFS_MAX_EXTENT_ITEM_SIZE(r) ((BTRFS_LEAF_DATA_SIZE(r) >> 4) - \
 					sizeof(struct btrfs_item))
+#define BTRFS_MAX_EXTENT_SIZE		(128 * 1024 * 1024)
 
 #define BTRFS_EXTENT_FLAG_DATA		(1ULL << 0)
 #define BTRFS_EXTENT_FLAG_TREE_BLOCK	(1ULL << 1)
@@ -744,7 +747,7 @@ struct btrfs_root_item {
 
 	/*
 	 * This generation number is used to test if the new fields are valid
-	 * and up to date while reading the root item. Everytime the root item
+	 * and up to date while reading the root item. Every time the root item
 	 * is written out, the "generation" field is copied into this field. If
 	 * anyone ever mounted the fs with an older kernel, we will have
 	 * mismatching generation values here and thus must invalidate the
@@ -895,7 +898,7 @@ struct btrfs_qgroup_status_item {
 	__le64 version;
 	__le64 generation;
 	__le64 flags;
-	__le64 scan;		/* progress during scanning */
+	__le64 rescan;		/* progress during scanning */
 } __attribute__ ((__packed__));
 
 struct btrfs_block_group_item {
@@ -957,13 +960,6 @@ struct btrfs_block_group_cache {
 	int ro;
 };
 
-struct btrfs_extent_ops {
-       int (*alloc_extent)(struct btrfs_root *root, u64 num_bytes,
-			   u64 hint_byte, struct btrfs_key *ins, int metadata);
-       int (*free_extent)(struct btrfs_root *root, u64 bytenr,
-		          u64 num_bytes);
-};
-
 struct btrfs_device;
 struct btrfs_fs_devices;
 struct btrfs_fs_info {
@@ -1014,7 +1010,6 @@ struct btrfs_fs_info {
 	u64 super_bytenr;
 	u64 total_pinned;
 
-	struct btrfs_extent_ops *extent_ops;
 	struct list_head dirty_cowonly_roots;
 	struct list_head recow_ebs;
 
@@ -1028,6 +1023,9 @@ struct btrfs_fs_info {
 	unsigned int quota_enabled:1;
 	unsigned int suppress_check_block_errors:1;
 	unsigned int ignore_fsid_mismatch:1;
+	unsigned int ignore_chunk_tree_error:1;
+	unsigned int avoid_meta_chunk_alloc:1;
+	unsigned int avoid_sys_chunk_alloc:1;
 
 	int (*free_extent_hook)(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root,
@@ -1058,10 +1056,10 @@ struct btrfs_root {
 	/* node allocations are done in nodesize units */
 	u32 nodesize;
 
-	/* leaf allocations are done in leafsize units */
+	/* Unused, equal to nodesize */
 	u32 leafsize;
 
-	/* leaf allocations are done in leafsize units */
+	/* leaf allocations are done in nodesize units */
 	u32 stripesize;
 
 	int ref_cows;
@@ -2127,8 +2125,8 @@ BTRFS_SETGET_FUNCS(qgroup_status_generation, struct btrfs_qgroup_status_item,
 		   generation, 64);
 BTRFS_SETGET_FUNCS(qgroup_status_flags, struct btrfs_qgroup_status_item,
 		   flags, 64);
-BTRFS_SETGET_FUNCS(qgroup_status_scan, struct btrfs_qgroup_status_item,
-		   scan, 64);
+BTRFS_SETGET_FUNCS(qgroup_status_rescan, struct btrfs_qgroup_status_item,
+		   rescan, 64);
 
 BTRFS_SETGET_STACK_FUNCS(stack_qgroup_status_version,
 			 struct btrfs_qgroup_status_item, version, 64);
@@ -2136,8 +2134,8 @@ BTRFS_SETGET_STACK_FUNCS(stack_qgroup_status_generation,
 			 struct btrfs_qgroup_status_item, generation, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_qgroup_status_flags,
 			 struct btrfs_qgroup_status_item, flags, 64);
-BTRFS_SETGET_STACK_FUNCS(stack_qgroup_status_scan,
-			 struct btrfs_qgroup_status_item, scan, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_status_rescan,
+			 struct btrfs_qgroup_status_item, rescan, 64);
 
 /* btrfs_qgroup_info_item */
 BTRFS_SETGET_FUNCS(qgroup_info_generation, struct btrfs_qgroup_info_item,
@@ -2198,6 +2196,32 @@ static inline u32 btrfs_file_extent_inline_item_len(struct extent_buffer *eb,
        return btrfs_item_size(eb, e) - offset;
 }
 
+/* struct btrfs_ioctl_search_header */
+static inline u64 btrfs_search_header_transid(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_64(&sh->transid);
+}
+
+static inline u64 btrfs_search_header_objectid(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_64(&sh->objectid);
+}
+
+static inline u64 btrfs_search_header_offset(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_64(&sh->offset);
+}
+
+static inline u32 btrfs_search_header_type(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_32(&sh->type);
+}
+
+static inline u32 btrfs_search_header_len(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_32(&sh->len);
+}
+
 /* this returns the number of file bytes represented by the inline item.
  * If an item is compressed, this is the uncompressed size
  */
@@ -2220,6 +2244,11 @@ static inline u32 btrfs_file_extent_inline_len(struct extent_buffer *eb,
 	return btrfs_file_extent_ram_bytes(eb, fi);
 }
 
+/*
+ * NOTE: Backward compatibility, do not use.
+ * Replacement: read nodesize directly
+ */
+__attribute__((deprecated))
 static inline u32 btrfs_level_size(struct btrfs_root *root, int level) {
 	if (level == 0)
 		return root->leafsize;
@@ -2354,6 +2383,8 @@ int btrfs_previous_item(struct btrfs_root *root,
 			int type);
 int btrfs_previous_extent_item(struct btrfs_root *root,
 			struct btrfs_path *path, u64 min_objectid);
+int btrfs_next_extent_item(struct btrfs_root *root,
+			struct btrfs_path *path, u64 max_objectid);
 int btrfs_cow_block(struct btrfs_trans_handle *trans,
 		    struct btrfs_root *root, struct extent_buffer *buf,
 		    struct extent_buffer *parent, int parent_slot,
