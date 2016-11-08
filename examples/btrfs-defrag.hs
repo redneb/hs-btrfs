@@ -4,7 +4,6 @@ import Control.Monad
 import Control.Monad.Fix
 import Control.Exception
 import Control.Arrow ((***))
-import Data.Monoid
 import Data.IORef
 import Text.Printf
 import System.Posix
@@ -21,8 +20,8 @@ main = do
     hSetBuffering stdout LineBuffering
     hSetBuffering stderr LineBuffering
     paths <- getArgs
-    statsRef <- newIORef mempty
-    printStats mempty
+    statsRef <- newIORef zeroStats
+    printStats zeroStats
     mapM_ (flip traverseTree (defragFile statsRef)) paths
     putChar '\n'
 
@@ -30,18 +29,25 @@ defragFile :: IORef Stats -> FilePath -> FileStatus -> IO ()
 defragFile statsRef path stat
     | isRegularFile stat = do
         extBefore <- getExtentCount defReqFlags path Nothing
-        when (extBefore > 1) $ do -- skip files with 1 extent
-            handleIOExn $ defragRange path dra
-            extAfter  <- getExtentCount defReqFlags path Nothing
-            stats <- readIORef statsRef
-            let stats' = stats <> Stats
-                    { stFiles = 1
-                    , stBytes = fromIntegral (fileSize stat)
-                    , stExtentsBefore = fromIntegral extBefore
-                    , stExtentsAfter  = fromIntegral extAfter
+        stats <- readIORef statsRef
+        stats' <-
+            if extBefore <= 1 then
+                return $ stats
+                    { stSkippedFiles = stSkippedFiles stats + 1
+                    , stSkippedBytes =
+                        stSkippedBytes stats + fromIntegral (fileSize stat)
                     }
-            writeIORef statsRef stats'
-            printStats stats'
+            else do
+                handleIOExn $ defragRange path dra
+                extAfter  <- getExtentCount defReqFlags path Nothing
+                return $ stats
+                    { stFiles = stFiles stats + 1
+                    , stBytes = stBytes stats + fromIntegral (fileSize stat)
+                    , stExtentsBefore = stExtentsBefore stats + fromIntegral extBefore
+                    , stExtentsAfter  = stExtentsAfter stats + fromIntegral extAfter
+                    }
+        writeIORef statsRef stats'
+        printStats stats'
     | otherwise = return ()
   where
     dra = defaultDefragRangeArgs
@@ -78,20 +84,22 @@ handleIOExn =
 data Stats = Stats
     { stFiles :: !Int
     , stBytes :: !Integer
+    , stSkippedFiles :: !Int
+    , stSkippedBytes :: !Integer
     , stExtentsBefore :: !Int
     , stExtentsAfter  :: !Int
     }
 
-instance Monoid Stats where
-    mempty = Stats 0 0 0 0
-    mappend (Stats a1 b1 c1 d1) (Stats a2 b2 c2 d2) =
-        Stats (a1 + a2) (b1 + b2) (c1 + c2) (d1 + d2)
+zeroStats :: Stats
+zeroStats = Stats 0 0 0 0 0 0
 
 printStats :: Stats -> IO ()
 printStats Stats{..} = do
-    printf "\rprocessed: %d file(s)/%s, extents (before/after): %d/%d"
+    printf "\rprocessed: %d file(s)/%s, skipped: %d file(s)/%s, extents (before/after): %d/%d"
         stFiles
         (prettyFileSize stBytes)
+        stSkippedFiles
+        (prettyFileSize stSkippedBytes)
         stExtentsBefore
         stExtentsAfter
     clearFromCursorToLineEnd
