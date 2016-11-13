@@ -23,7 +23,7 @@ module System.Linux.Btrfs
     (
     -- * Basic types
       FileSize, ObjectType, ObjectId, InodeNum, SubvolId, CompressionType(..)
-    -- * File cloning
+    -- * File cloning/deduplication
     , cloneFd, clone, cloneNew
     , cloneRangeFd, cloneRange
     , CloneResult(..)
@@ -130,7 +130,7 @@ cloneFd srcFd dstFd =
 
 -- | Clone an entire file to an existing file.
 --
--- Note: calls the @BTRFS_IOC_CLONE@ @ioctl@.
+-- Note: calls the @BTRFS_IOC_CLONE@/@FICLONE@ @ioctl@.
 clone
     :: FILEPATH -- ^ The source file.
     -> FILEPATH -- ^ The destination file.
@@ -143,7 +143,7 @@ clone srcPath dstPath =
 -- | Like 'clone' except that it will create or truncate the destination
 -- file if necessary. This is similar to @cp --reflink=always@.
 --
--- Note: calls the @BTRFS_IOC_CLONE@ @ioctl@.
+-- Note: calls the @BTRFS_IOC_CLONE@/@FICLONE@ @ioctl@.
 cloneNew :: FILEPATH -> FILEPATH -> IO ()
 cloneNew srcPath dstPath =
     withFd srcPath ReadOnly $ \srcFd -> do
@@ -165,7 +165,7 @@ cloneRangeFd srcFd srcOff srcLen dstFd dstOff =
 -- | Clones a range of bytes from a file to another file. All ranges must
 -- be block-aligned.
 --
--- Note: calls the @BTRFS_IOC_CLONE_RANGE@ @ioctl@.
+-- Note: calls the @BTRFS_IOC_CLONE_RANGE@/@FICLONERANGE@ @ioctl@.
 cloneRange
     :: FILEPATH -- ^ The source file.
     -> FileSize -- ^ The offset within the source file.
@@ -270,7 +270,7 @@ cloneRangeIfSameFd srcFd srcOff srcLen dsts = do
 -- function returns a list of outcomes, one for each destination file, and
 -- no exceptions will be raised for the failed files.
 --
--- Note: calls the @BTRFS_IOC_FILE_EXTENT_SAME@ @ioctl@.
+-- Note: calls the @BTRFS_IOC_FILE_EXTENT_SAME@/@FIDEDUPERANGE@ @ioctl@.
 --
 -- /Requires Linux 3.12 or later./
 cloneRangeIfSame
