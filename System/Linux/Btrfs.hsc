@@ -95,6 +95,7 @@ import System.Linux.Btrfs.FilePathLike
 import Data.Word.Endian
 import System.Linux.Btrfs.Time
 import System.Linux.Btrfs.UUID
+import System.Linux.Capabilities
 
 #include <btrfs/ioctl.h>
 #include <btrfs/ctree.h>
@@ -279,14 +280,19 @@ cloneRangeIfSame
     -> FileSize               -- ^ The length of the range.
     -> [(FILEPATH, FileSize)] -- ^ The destination files and corresponding offsets.
     -> IO [CloneResult]
-cloneRangeIfSame srcPath srcOff srcLen dstsP0 =
+cloneRangeIfSame srcPath srcOff srcLen dstsP0 = do
+    -- we check if the process has the CAP_SYS_ADMIN capability
+    -- if it does we use ReadOnly to open the destination files
+    -- this allows privileged users to operate on readonly snapshots
+    isAdmin <- hasSysAdminCap
+    let openMode = if isAdmin then ReadOnly else WriteOnly
     withFd srcPath ReadOnly $ \srcFd ->
-        loop srcFd (reverse dstsP0) []
+        loop srcFd openMode (reverse dstsP0) []
   where
-    loop srcFd ((dstPath, dstOff) : dstsP) dsts =
-        withFd dstPath WriteOnly $ \fd ->
-            loop srcFd dstsP ((fd, dstOff) : dsts)
-    loop srcFd [] dsts =
+    loop srcFd openMode ((dstPath, dstOff) : dstsP) dsts =
+        withFd dstPath openMode $ \fd ->
+            loop srcFd openMode dstsP ((fd, dstOff) : dsts)
+    loop srcFd _ [] dsts =
         cloneRangeIfSameFd srcFd srcOff srcLen dsts
 
 --------------------------------------------------------------------------------
