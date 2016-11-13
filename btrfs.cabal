@@ -1,5 +1,5 @@
 name:                btrfs
-version:             0.1.2.0
+version:             0.1.2.1
 synopsis:            Bindings to the btrfs API
 description:
   This package provides bindings to the low-level btrfs API (i.e. the

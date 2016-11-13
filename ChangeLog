@@ -1,4 +1,4 @@
-vX.Y.Z.W
+v0.1.2.1
 
 	* Support cloneRangeIfSame on read-only subvolumes (requires
 	CAP_SYS_ADMIN).
