@@ -1,3 +1,7 @@
+v0.1.2.2
+
+	* Fix compilation error when libcap is not installed.
+
 v0.1.2.1
 
 	* Support cloneRangeIfSame on read-only subvolumes (requires
