@@ -77,6 +77,16 @@ executable btrfs-clone-range
     default-language:    Haskell2010
     ghc-options:         -Wall
 
+executable btrfs-split
+  hs-source-dirs:      examples
+  main-is:             btrfs-split.hs
+  if !flag(examples)
+    buildable:           False
+  else
+    build-depends:       base >=4.6 && <5, btrfs, unix
+    default-language:    Haskell2010
+    ghc-options:         -Wall
+
 executable btrfs-list-subvols
   hs-source-dirs:      examples
   main-is:             btrfs-list-subvols.hs
