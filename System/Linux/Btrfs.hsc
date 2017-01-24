@@ -313,7 +313,10 @@ createSubvol :: FILEPATH -> IO ()
 createSubvol path =
     simpleSubvolOp "createSubvol" path (#const BTRFS_IOC_SUBVOL_CREATE)
 
--- | Destroy (delete) a subvolume.
+-- | Destroy (delete) a subvolume. The directory that corresponds to the
+-- subvolume is removed asynchronously. As a result, the subvolume may
+-- appear again after a crash. If this is not acceptable, call 'startSync'
+-- followed by a 'waitSync', after the @destroySubvol@ call.
 --
 -- Note: calls the @BTRFS_IOC_SNAP_DESTROY@ @ioctl@.
 destroySubvol :: FILEPATH -> IO ()
