@@ -1,3 +1,8 @@
+v0.1.2.3
+
+	* System.Linux.Btrfs.UUID.fromString did not handle all malformed
+	UUIDs correctly.
+
 v0.1.2.2
 
 	* Fix compilation error when libcap is not installed.
