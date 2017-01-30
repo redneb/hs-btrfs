@@ -52,11 +52,11 @@ fromString s
     s' = filter (/= '-') s
 
 isValidUUID :: String -> Bool
-isValidUUID = and . zipWith checkChar [0..]
+isValidUUID s = length s == 36 && and (zipWith checkChar [0..] s)
   where
     checkChar i c =
         if i `elem` hyphenPosns then
             c == '-'
         else
-            c `elem` "0123456789abcdefABCDEF"
+            ('0' <= c && c <= '9') || ('a' <= c && c <= 'f')|| ('A' <= c && c <= 'F')
     hyphenPosns = [8, 13, 18, 23] :: [Int]
