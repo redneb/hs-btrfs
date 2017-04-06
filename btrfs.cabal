@@ -87,6 +87,16 @@ executable btrfs-split
     default-language:    Haskell2010
     ghc-options:         -Wall
 
+executable btrfs-join
+  hs-source-dirs:      examples
+  main-is:             btrfs-join.hs
+  if !flag(examples)
+    buildable:           False
+  else
+    build-depends:       base >=4.6 && <5, btrfs, unix
+    default-language:    Haskell2010
+    ghc-options:         -Wall
+
 executable btrfs-list-subvols
   hs-source-dirs:      examples
   main-is:             btrfs-list-subvols.hs
