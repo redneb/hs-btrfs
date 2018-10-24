@@ -48,7 +48,16 @@ module System.Linux.Btrfs
     , getSubvolByReceivedUuidFd, getSubvolByReceivedUuid
     , getDefaultSubvolFd, getDefaultSubvol
     , setDefaultSubvolFd, setDefaultSubvol
-    -- * Defragging
+    -- * Defrag
+    -- | There is a limitation in the kernel whereby a defrag operation
+    -- will be silently aborted when the calling process receives any
+    -- signal. This does not play well with GHC's rts which in some
+    -- cases uses signals as a way to preempt haskell threads. So in order
+    -- to use 'defrag' or 'defragRange', you must compile your program with
+    -- GHC >=8.2 and the use the threaded runtime which does not use
+    -- signals anymore. Alternatively, for older versions of GHC, you can
+    -- use something like the @withRTSSignalsBlocked@ function from
+    -- <http://www.serpentine.com/blog/2010/09/04/dealing-with-fragile-c-libraries-e-g-mysql-from-haskell/ here>.
     , defragFd, defrag
     , DefragRangeArgs(..), defaultDefragRangeArgs
     , defragRangeFd, defragRange
@@ -81,7 +90,6 @@ module System.Linux.Btrfs
 import System.Posix.Types
 import System.Posix.IO hiding (openFd)
 import System.Posix.Files
-import System.Posix.Signals
 import System.IO.Error
 import Control.Exception
 import Control.Monad
@@ -742,8 +750,7 @@ setDefaultSubvol path subvolId =
 defragFd :: Fd -> IO ()
 defragFd fd =
     throwErrnoIfMinus1_ "defragFd" $
-        withBlockSIGVTALRM $ -- this is probably a bad idea
-            ioctl fd (#const BTRFS_IOC_DEFRAG) nullPtr
+        ioctl fd (#const BTRFS_IOC_DEFRAG) nullPtr
 
 -- | Defrag a single file.
 --
@@ -787,8 +794,7 @@ defragRangeFd fd DefragRangeArgs{..} =
         (#poke struct btrfs_ioctl_defrag_range_args, extent_thresh) args draExtentThreshold
         (#poke struct btrfs_ioctl_defrag_range_args, compress_type) args comp_type
         throwErrnoIfMinus1_ "defragRangeFd" $
-            withBlockSIGVTALRM $ -- this is probably a bad idea
-                ioctl fd (#const BTRFS_IOC_DEFRAG_RANGE) args
+            ioctl fd (#const BTRFS_IOC_DEFRAG_RANGE) args
   where
     flags = comp_flags .|. if draFlush then (#const BTRFS_DEFRAG_RANGE_START_IO) else 0
     comp_flags :: Word64
@@ -1191,12 +1197,6 @@ withSplitPathOpenParent loc maxLen path action =
         withFd dir ReadOnly $ action cName
   where
     (dir, name) = splitFileName (dropTrailingSlash path)
-
-withBlockSIGVTALRM :: IO a -> IO a
-withBlockSIGVTALRM =
-    bracket_ (blockSignals s) (unblockSignals s)
-  where
-    s = addSignal sigVTALRM emptySignalSet
 
 nothingIf :: Bool -> a -> Maybe a
 nothingIf f v = if f then Nothing else Just v

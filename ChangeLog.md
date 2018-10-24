@@ -1,6 +1,7 @@
 #### x.y.z.w *YYYY-MM-DD*
 
 	* Implement getFSInfo.
+	* Remove an ugly hack that was used to block signals while defrag was running.
 
 #### 0.1.2.3 *2017-01-30*
 
