@@ -22,6 +22,7 @@ import System.Posix.ByteString.FilePath (RawFilePath)
 import qualified System.Posix.IO as S (openFd)
 import qualified System.Posix.IO.ByteString as B (openFd)
 import System.IO.Unsafe (unsafePerformIO)
+import Prelude
 
 class (Monoid s, IsString s) => FilePathLike s where
     asString :: s -> String
