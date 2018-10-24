@@ -65,8 +65,8 @@ executable btrfs-defrag
   else
     build-depends:       base >=4.6 && <5, btrfs, unix, filepath,
                          linux-file-extents, ansi-terminal
-    default-language:    Haskell2010
-    ghc-options:         -Wall
+  default-language:    Haskell2010
+  ghc-options:         -Wall
 
 executable btrfs-clone-range
   hs-source-dirs:      examples
@@ -75,8 +75,8 @@ executable btrfs-clone-range
     buildable:           False
   else
     build-depends:       base >=4.6 && <5, btrfs
-    default-language:    Haskell2010
-    ghc-options:         -Wall
+  default-language:    Haskell2010
+  ghc-options:         -Wall
 
 executable btrfs-split
   hs-source-dirs:      examples
@@ -85,8 +85,8 @@ executable btrfs-split
     buildable:           False
   else
     build-depends:       base >=4.6 && <5, btrfs, unix
-    default-language:    Haskell2010
-    ghc-options:         -Wall
+  default-language:    Haskell2010
+  ghc-options:         -Wall
 
 executable btrfs-join
   hs-source-dirs:      examples
@@ -95,8 +95,8 @@ executable btrfs-join
     buildable:           False
   else
     build-depends:       base >=4.6 && <5, btrfs, unix
-    default-language:    Haskell2010
-    ghc-options:         -Wall
+  default-language:    Haskell2010
+  ghc-options:         -Wall
 
 executable btrfs-list-subvols
   hs-source-dirs:      examples
@@ -105,8 +105,8 @@ executable btrfs-list-subvols
     buildable:           False
   else
     build-depends:       base >=4.6 && <5, btrfs
-    default-language:    Haskell2010
-    ghc-options:         -Wall
+  default-language:    Haskell2010
+  ghc-options:         -Wall
 
 executable btrfs-print-creation-time
   hs-source-dirs:      examples
@@ -116,5 +116,5 @@ executable btrfs-print-creation-time
     buildable:           False
   else
     build-depends:       base >=4.6 && <5, btrfs, unix >=2.6, time >=1.4
-    default-language:    Haskell2010
-    ghc-options:         -Wall
+  default-language:    Haskell2010
+  ghc-options:         -Wall
