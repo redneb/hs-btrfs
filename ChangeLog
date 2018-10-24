@@ -1,3 +1,7 @@
+vX.Y.Z.W
+
+	* Implement getFSInfo.
+
 v0.1.2.3
 
 	* System.Linux.Btrfs.UUID.fromString did not handle all malformed

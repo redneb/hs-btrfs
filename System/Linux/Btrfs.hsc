@@ -52,6 +52,10 @@ module System.Linux.Btrfs
     , defragFd, defrag
     , DefragRangeArgs(..), defaultDefragRangeArgs
     , defragRangeFd, defragRange
+    -- * File system info
+    , FSInfo
+    , fsiDeviceCount, fsiUuid, fsiNodeSize, fsiSectorSize, fsiCloneAlignment
+    , getFSInfoFd, getFSInfo
     -- * Sync
     , syncFd, sync
     , startSyncFd, startSync
@@ -164,7 +168,8 @@ cloneRangeFd srcFd srcOff srcLen dstFd dstOff =
             ioctl_fast dstFd (#const BTRFS_IOC_CLONE_RANGE) cra
 
 -- | Clones a range of bytes from a file to another file. All ranges must
--- be block-aligned.
+-- be block-aligned (the block size can be obtained using 'getFSInfo' and
+-- 'fsiCloneAlignment').
 --
 -- Note: calls the @BTRFS_IOC_CLONE_RANGE@/@FICLONERANGE@ @ioctl@.
 cloneRange
@@ -801,6 +806,51 @@ defragRange :: FILEPATH -> DefragRangeArgs -> IO ()
 defragRange path args =
     withFd path ReadWrite $ \fd ->
         defragRangeFd fd args
+
+--------------------------------------------------------------------------------
+
+-- | Information about a btrfs file system.
+data FSInfo = FSInfo
+    { fsiDeviceCount :: Word64
+        -- ^ The number of devices in the file system.
+    , fsiUuid :: UUID
+        -- ^ The UUID of the file system.
+    , fsiNodeSize :: FileSize
+        -- ^ The tree block size in which metadata is stored.
+    , fsiSectorSize :: FileSize
+        -- ^ The minimum data block allocation unit.
+    , fsiCloneAlignment :: FileSize
+        -- ^ The size that is used for the alignment constraints of clone
+        -- range operations.
+    }
+  deriving (Show, Eq)
+
+getFSInfoFd :: Fd -> IO FSInfo
+getFSInfoFd fd =
+    allocaBytes (#size struct btrfs_ioctl_fs_info_args) $ \fsia -> do
+        throwErrnoIfMinus1_ "getFSInfoFd" $
+            ioctl_fast fd (#const BTRFS_IOC_FS_INFO) fsia
+        nd <- (#peek struct btrfs_ioctl_fs_info_args, num_devices) fsia :: IO Word64
+        uuid <- (#peek struct btrfs_ioctl_fs_info_args, fsid) fsia :: IO UUID
+        ns <- (#peek struct btrfs_ioctl_fs_info_args, nodesize) fsia :: IO Word32
+        ss <- (#peek struct btrfs_ioctl_fs_info_args, sectorsize) fsia :: IO Word32
+        ca <- (#peek struct btrfs_ioctl_fs_info_args, clone_alignment) fsia :: IO Word32
+        return FSInfo
+            { fsiDeviceCount = nd
+            , fsiUuid = uuid
+            , fsiNodeSize = fromIntegral ns
+            , fsiSectorSize = fromIntegral ss
+            , fsiCloneAlignment = fromIntegral ca
+            }
+
+-- | Retrieve information about a btrfs file system.
+--
+-- Note: calls the @BTRFS_IOC_FS_INFO@ @ioctl@.
+getFSInfo
+    :: FILEPATH -- ^ The mount point of the volume (or any file in that volume).
+    -> IO FSInfo
+getFSInfo path =
+    withFd path ReadOnly getFSInfoFd
 
 --------------------------------------------------------------------------------
 
