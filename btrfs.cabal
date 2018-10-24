@@ -32,6 +32,7 @@ extra-source-files:
   include/btrfs/list.h
   include/btrfs/radix-tree.h
   include/btrfs/rbtree.h
+  include/btrfs/sizes.h
   include/sys/capability.h
   make-bytestring.hs
 
