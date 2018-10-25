@@ -22,7 +22,8 @@ module System.Linux.Btrfs
 #endif
     (
     -- * Basic types
-      FileSize, ObjectType, ObjectId, InodeNum, SubvolId, CompressionType(..)
+      FileSize, ObjectType, ObjectId, InodeNum, SubvolId
+    , CompressionType, compressNone, compressZlib, compressLZO, compressZstd
     -- * File cloning/deduplication
     , cloneFd, clone, cloneNew
     , cloneRangeFd, cloneRange
@@ -129,8 +130,22 @@ type InodeNum = ObjectId
 
 type SubvolId = ObjectId
 
-data CompressionType = Zlib | LZO | Zstd
-    deriving (Show, Read, Eq, Enum, Bounded)
+newtype CompressionType = CompressionType Word32
+    deriving Eq
+
+instance Show CompressionType where
+    show t
+        | t == compressNone = "compressNone"
+        | t == compressZlib = "compressZlib"
+        | t == compressLZO  = "compressLZO"
+        | t == compressZstd = "compressZstd"
+        | otherwise = error "unknown compression type"
+
+compressNone, compressZlib, compressLZO, compressZstd :: CompressionType
+compressNone = CompressionType (#const BTRFS_COMPRESS_NONE)
+compressZlib = CompressionType (#const BTRFS_COMPRESS_ZLIB)
+compressLZO  = CompressionType (#const BTRFS_COMPRESS_LZO)
+compressZstd = CompressionType (#const BTRFS_COMPRESS_ZSTD)
 
 --------------------------------------------------------------------------------
 
@@ -767,7 +782,7 @@ data DefragRangeArgs = DefragRangeArgs
     , draExtentThreshold :: Word32
         -- ^ Any extent of size bigger or equal to this number will be
         -- considered already defragged. Use 0 for the kernel default.
-    , draCompress :: Maybe CompressionType
+    , draCompress :: CompressionType
         -- ^ Compress the file while defragmenting.
     , draFlush :: Bool
         -- ^ Flush data to disk immediately after defragmenting.
@@ -781,7 +796,7 @@ defaultDefragRangeArgs = DefragRangeArgs
     { draStart = 0
     , draLength = maxBound
     , draExtentThreshold = 0
-    , draCompress = Nothing
+    , draCompress = compressNone
     , draFlush = False
     }
 
@@ -796,15 +811,12 @@ defragRangeFd fd DefragRangeArgs{..} =
         throwErrnoIfMinus1_ "defragRangeFd" $
             ioctl fd (#const BTRFS_IOC_DEFRAG_RANGE) args
   where
+    flags :: Word64
     flags = comp_flags .|. if draFlush then (#const BTRFS_DEFRAG_RANGE_START_IO) else 0
-    comp_flags :: Word64
-    comp_type :: Word32
-    (comp_flags, comp_type) =
-        case draCompress of
-            Nothing -> (0, 0)
-            Just Zlib -> ((#const BTRFS_DEFRAG_RANGE_COMPRESS), (#const BTRFS_COMPRESS_ZLIB))
-            Just LZO  -> ((#const BTRFS_DEFRAG_RANGE_COMPRESS), (#const BTRFS_COMPRESS_LZO))
-            Just Zstd -> ((#const BTRFS_DEFRAG_RANGE_COMPRESS), (#const BTRFS_COMPRESS_ZSTD))
+    comp_flags
+        | draCompress == compressNone = 0
+        | otherwise = (#const BTRFS_DEFRAG_RANGE_COMPRESS)
+    CompressionType comp_type = draCompress
 
 -- | Defrag a range within a single file.
 --
