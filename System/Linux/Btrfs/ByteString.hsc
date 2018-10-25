@@ -725,7 +725,7 @@ getDefaultSubvolFd fd = do
     l <- treeSearchListFd fd sk $ \_ ptr -> do
         LE16 nameLen <- (#peek struct btrfs_dir_item, name_len) ptr
         let cName = ptr `plusPtr` (#size struct btrfs_dir_item)
-        name <- peekCStringLen (cName, fromIntegral nameLen)
+        name <- peekFilePathLen (cName, fromIntegral nameLen)
         if name /= "default" then
             return Nothing
         else do
@@ -957,7 +957,7 @@ resolveInodeFd subvolFd inum =
         count      <- (#peek struct btrfs_data_container, elem_cnt   ) fspath :: IO Word32
         let val = (#ptr struct btrfs_data_container, val) fspath :: Ptr Word64
         vals <- peekArray (fromIntegral count) val
-        paths <- mapM (peekCString . plusPtr val . fromIntegral) vals
+        paths <- mapM (peekFilePath . plusPtr val . fromIntegral) vals
         return (paths, fromIntegral elemMissed)
   where
     fspathSize = 2 * 1024 + (#size struct btrfs_data_container)
@@ -986,7 +986,7 @@ lookupInodeFd fd treeId inum =
             ioctl_fast fd (#const BTRFS_IOC_INO_LOOKUP) ila
         treeId' <- (#peek struct btrfs_ioctl_ino_lookup_args, treeid) ila :: IO Word64
         let cName = (#ptr struct btrfs_ioctl_ino_lookup_args, name) ila
-        name <- peekCString cName
+        name <- peekFilePath cName
         return (treeId', dropTrailingSlash name)
 
 -- | Find the path of a file given its inode number and the id of the
@@ -1191,7 +1191,7 @@ peekRootRef rrPtr = do
     LE64 dirId   <- (#peek struct btrfs_root_ref, dirid   ) rrPtr
     LE16 nameLen <- (#peek struct btrfs_root_ref, name_len) rrPtr
     let cName = rrPtr `plusPtr` (#size struct btrfs_root_ref)
-    name <- peekCStringLen (cName, fromIntegral nameLen)
+    name <- peekFilePathLen (cName, fromIntegral nameLen)
     return (dirId, name)
 
 --------------------------------------------------------------------------------
@@ -1203,7 +1203,7 @@ withFd path openMode action =
 
 withSplitPathOpenParent :: String -> Int -> FILEPATH -> (CStringLen -> Fd -> IO r) -> IO r
 withSplitPathOpenParent loc maxLen path action =
-    unsafeWithCStringLen name $ \cName @ (_, l) -> do
+    unsafeWithFilePathLen name $ \cName @ (_, l) -> do
         unless (l <= maxLen) $
             ioError $ flip ioeSetErrorString "the subvolume name is too long"
                     $ mkIOError illegalOperationErrorType loc Nothing (Just (asString name))

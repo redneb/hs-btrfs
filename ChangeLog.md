@@ -4,6 +4,7 @@
 	* Remove an ugly hack that was used to block signals while defrag was running.
 	* Support Zstd compression.
 	* Make CompressionType abstract.
+	* Fix handling of filenames that are not valid according to the current locale.
 
 #### 0.1.2.3 *2017-01-30*
 
