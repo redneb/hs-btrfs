@@ -70,6 +70,9 @@ module System.Linux.Btrfs
     , FSInfo
     , fsiDeviceCount, fsiUuid, fsiNodeSize, fsiSectorSize, fsiCloneAlignment
     , getFSInfoFd, getFSInfo
+    -- * File system label
+    , getFSLabelFd, getFSLabel
+    , setFSLabelFd, setFSLabel
     -- * Sync
     , syncFd, sync
     , startSyncFd, startSync
@@ -874,6 +877,48 @@ getFSInfo
     -> IO FSInfo
 getFSInfo path =
     withFd path ReadOnly getFSInfoFd
+
+--------------------------------------------------------------------------------
+
+getFSLabelFd :: Fd -> IO FILEPATH
+getFSLabelFd fd =
+    allocaBytesZero maxLabelSize $ \ptr -> do
+        throwErrnoIfMinus1_ "getFSLabelFd" $
+            ioctl_fast fd (#const BTRFS_IOC_GET_FSLABEL) ptr
+        peekFilePath ptr
+
+-- | Retrieve the label of a btrfs file system.
+--
+-- Note: calls the @BTRFS_IOC_GET_FSLABEL@ @ioctl@.
+getFSLabel
+    :: FILEPATH -- ^ The mount point of the volume (or any file in that volume).
+    -> IO FILEPATH
+getFSLabel path =
+    withFd path ReadOnly getFSLabelFd
+
+setFSLabelFd :: Fd -> FILEPATH -> IO ()
+setFSLabelFd fd label =
+    withFilePathLen label $ \(ptr, len) ->
+        allocaBytesZero maxLabelSize $ \buf -> do
+            copyArray buf ptr (min len (maxLabelSize - 1))
+            throwErrnoIfMinus1_ "setFSLabelFd" $
+                ioctl fd (#const BTRFS_IOC_SET_FSLABEL) buf
+
+-- | Set the label of a btrfs file system. Note that a label can be up to
+-- 255 /bytes/ long. If the provided label is longer, it will be silently
+-- truncated.
+--
+-- Note: calls the @BTRFS_IOC_SET_FSLABEL@ @ioctl@.
+setFSLabel
+    :: FILEPATH -- ^ The mount point of the volume (or any file in that volume).
+    -> FILEPATH -- ^ The new label.
+    -> IO ()
+setFSLabel path label =
+    withFd path ReadOnly $ \fd ->
+        setFSLabelFd fd label
+
+maxLabelSize :: Int
+maxLabelSize = (#const BTRFS_LABEL_SIZE)
 
 --------------------------------------------------------------------------------
 
