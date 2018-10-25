@@ -16,6 +16,10 @@ can be distinguished by the @Fd@ suffix in their names.
 #if BTRFS_RAW_PATHS
 ##define FILEPATH RawFilePath
 module System.Linux.Btrfs.ByteString
+{-# DEPRECATED "This module is deprecated and will be removed in a\
+ future version of this library. Please leave a comment on\
+ https://github.com/redneb/hs-btrfs/issues/5 if you think that is\
+ should not be removed." #-}
 #else
 ##define FILEPATH FilePath
 module System.Linux.Btrfs

@@ -5,6 +5,7 @@
 	* Support Zstd compression.
 	* Make CompressionType abstract.
 	* Fix handling of filenames that are not valid according to the current locale.
+	* Deprecate System.Linux.Btrfs.ByteString.
 
 #### 0.1.2.3 *2017-01-30*
 
