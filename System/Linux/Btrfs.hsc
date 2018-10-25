@@ -129,7 +129,7 @@ type InodeNum = ObjectId
 
 type SubvolId = ObjectId
 
-data CompressionType = Zlib | LZO
+data CompressionType = Zlib | LZO | Zstd
     deriving (Show, Read, Eq, Enum, Bounded)
 
 --------------------------------------------------------------------------------
@@ -804,6 +804,7 @@ defragRangeFd fd DefragRangeArgs{..} =
             Nothing -> (0, 0)
             Just Zlib -> ((#const BTRFS_DEFRAG_RANGE_COMPRESS), (#const BTRFS_COMPRESS_ZLIB))
             Just LZO  -> ((#const BTRFS_DEFRAG_RANGE_COMPRESS), (#const BTRFS_COMPRESS_LZO))
+            Just Zstd -> ((#const BTRFS_DEFRAG_RANGE_COMPRESS), (#const BTRFS_COMPRESS_ZSTD))
 
 -- | Defrag a range within a single file.
 --
