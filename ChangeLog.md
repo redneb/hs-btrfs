@@ -1,4 +1,4 @@
-#### X.Y.Z.W *YYYY-MM-DD*
+#### 0.2.1.0 *2023-06-23*
 
 	* Support building with `ghc-9`.
 	* Support building with `unix-2.8`.
