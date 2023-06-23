@@ -96,7 +96,7 @@ module System.Linux.Btrfs
     ) where
 
 import System.Posix.Types
-import System.Posix.IO hiding (openFd)
+import System.Posix.IO hiding (openFd, sync)
 import System.Posix.Files
 import System.IO.Error
 import Control.Exception
@@ -184,7 +184,7 @@ cloneNew srcPath dstPath =
     withFd srcPath ReadOnly $ \srcFd -> do
         stat <- getFdStatus srcFd
         let mode = fileMode stat
-        bracket (openFd dstPath WriteOnly (Just mode) defaultFileFlags {trunc = True}) closeFd $ \dstFd ->
+        bracket (openFd dstPath WriteOnly defaultFileFlags {trunc = True, creat = Just mode}) closeFd $ \dstFd ->
             cloneFd srcFd dstFd
 
 cloneRangeFd :: Fd -> FileSize -> FileSize -> Fd -> FileSize -> IO ()
@@ -1247,7 +1247,7 @@ peekRootRef rrPtr = do
 
 withFd :: FILEPATH -> OpenMode -> (Fd -> IO r) -> IO r
 withFd path openMode action =
-    bracket (openFd path openMode Nothing defaultFileFlags {nonBlock = True})
+    bracket (openFd path openMode defaultFileFlags {nonBlock = True})
             closeFd action
 
 withSplitPathOpenParent :: String -> Int -> FILEPATH -> (CStringLen -> Fd -> IO r) -> IO r

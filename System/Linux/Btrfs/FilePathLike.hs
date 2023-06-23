@@ -30,7 +30,7 @@ class (Monoid s, IsString s) => FilePathLike s where
     withFilePath :: s -> (CString -> IO a) -> IO a
     withFilePathLen :: s -> (CStringLen -> IO a) -> IO a
     unsafeWithFilePathLen :: s -> (CStringLen -> IO a) -> IO a
-    openFd :: s -> OpenMode -> Maybe FileMode -> OpenFileFlags -> IO Fd
+    openFd :: s -> OpenMode -> OpenFileFlags -> IO Fd
     dropTrailingSlash :: s -> s
     (</>) :: s -> s -> s
     splitFileName :: s -> (s, s)

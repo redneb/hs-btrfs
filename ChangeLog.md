@@ -1,6 +1,7 @@
 #### X.Y.Z.W *YYYY-MM-DD*
 
 	* Support building with `ghc-9`.
+	* Support building with `unix-2.8`.
 
 #### 0.2.0.0 *2018-10-25*
 
