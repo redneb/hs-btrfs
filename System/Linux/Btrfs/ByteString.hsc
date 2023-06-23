@@ -1252,7 +1252,7 @@ withFd path openMode action =
 
 withSplitPathOpenParent :: String -> Int -> FILEPATH -> (CStringLen -> Fd -> IO r) -> IO r
 withSplitPathOpenParent loc maxLen path action =
-    unsafeWithFilePathLen name $ \cName @ (_, l) -> do
+    unsafeWithFilePathLen name $ \cName@(_, l) -> do
         unless (l <= maxLen) $
             ioError $ flip ioeSetErrorString "the subvolume name is too long"
                     $ mkIOError illegalOperationErrorType loc Nothing (Just (asString name))
